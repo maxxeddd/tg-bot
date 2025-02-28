@@ -2,7 +2,7 @@ from dotenv import load_dotenv
 import os
 import datetime
 
-from telegram import Update
+from telegram import Update, Bot
 from telegram.ext import (
     ApplicationBuilder,
     CommandHandler,
@@ -16,6 +16,8 @@ TOKEN: str = os.environ.get("TOKEN")
 
 managers: [str] = ["n100o0"]
 
+pending_orders: [str] = []
+
 
 def log(msg: str, logtype="INFO") -> None:
     timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
@@ -23,22 +25,41 @@ def log(msg: str, logtype="INFO") -> None:
 
 
 async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
+
+    username: str = update.effective_chat.username
+    msg: str = update.message.text.lower()
+
     log(
-        f"Message from {update.effective_chat.username}: {update.message.text}",
+        f"Message from {username}: {update.message.text}",
         "MESSAGE",
     )
 
-    # if update.effective_chat.username in managers:
-    # pass
+    if username in managers:
+        pass
 
-    msg: str = update.message.text.lower()
     split: [str] = msg.split()
 
-    if msg.startswith("заказ"):
+    if msg.startswith("заказ "):
         if len(split) < 2:
             await update.message.reply_text(
                 'Цена не была предложена. Пример использования бота: "заказ 500".'
             )
+            return
+
+        if not split[1].isdigit():
+            await update.message.reply_text("Предложенная цена недействительна.")
+            return
+
+        pending_orders.append(username)
+        log(f"{username} has been added to pending requests")
+        await update.message.reply_text("Ваш заказ принят, дождитесь ответа менеджера.")
+
+        await send_to_manager(501711095, f"{username}: {split[1]}")
+
+
+async def send_to_manager(chat_id, message: str):
+    bot = Bot(token=TOKEN)
+    await bot.send_message(chat_id, text=message)
 
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
