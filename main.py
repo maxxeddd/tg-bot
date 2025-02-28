@@ -13,9 +13,10 @@ from telegram.ext import (
 
 load_dotenv()
 TOKEN: str = os.environ.get("TOKEN")
+MANAGER_CHAT_ID: int = int(os.environ.get("MANAGER_CHAT_ID"))
 
 bot = Bot(token=TOKEN)
-managers: [str] = ["n100o0"]
+managers: [str] = []  # ! ДОБАВИТЬ СЮДА ЮЗЕРНЕЙМЫ МЕНЕДЖЕРОВ
 
 awaiting_manager: [str] = []
 awaiting_client: [str] = []
@@ -92,7 +93,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
             "Ваш заказ принят, дождитесь одобрения заказа менеджером."
         )
 
-        await send_to_manager(501711095, f"{username}: {split[1]}")
+        await send_to_manager(MANAGER_CHAT_ID, f"{username}: {split[1]}")
 
 
 async def send_to_manager(chat_id, message: str):
