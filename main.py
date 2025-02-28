@@ -49,15 +49,30 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 awaiting_manager.remove(split[0])
                 awaiting_client.append(split[0])
 
+            if split[1].isdigit():
+                chat_id = chat_ids[split[0]]
+                await context.bot.send_message(
+                    chat_id,
+                    f"Менеджер предлагает следующую цену для данного товара: {split[1]}. Подтвердите заказ: Да/Нет",
+                )
+                log(f"{split[0]}'s order has been changed")
+                awaiting_manager.remove(split[0])
+                awaiting_client.append(split[0])
+
+    if username in awaiting_manager:
+        return
+
     if username in awaiting_client:
-        while True:
-            match split[0].lower():
-                case "да":
-                    await update.message.reply_text("Ваш заказ в обработке.")
-                case "нет":
-                    await update.message.reply_text("Заказ был отклонён.")
-                case _:
-                    await update.message.reply_text('Ответьте "да" или "нет".')
+        match split[0].lower():
+            case "да":
+                await update.message.reply_text("Ваш заказ в обработке.")
+                awaiting_client.remove(username)
+            case "нет":
+                await update.message.reply_text("Заказ был отклонён.")
+                awaiting_client.remove(username)
+            case _:
+                await update.message.reply_text('Ответьте "да" или "нет".')
+                return
 
     if msg.startswith("заказ "):
         if len(split) < 2:
@@ -73,7 +88,9 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
         awaiting_manager.append(username)
         chat_ids[username] = update.effective_chat.id
         log(f"{username} has been added to orders ({split[1]})")
-        await update.message.reply_text("Ваш заказ принят, дождитесь ответа менеджера.")
+        await update.message.reply_text(
+            "Ваш заказ принят, дождитесь одобрения заказа менеджером."
+        )
 
         await send_to_manager(501711095, f"{username}: {split[1]}")
 
@@ -84,7 +101,7 @@ async def send_to_manager(chat_id, message: str):
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     await update.message.reply_text(
-        f'Привет, {update.effective_chat.full_name}!\n\n Это чат-бот, предназначенный для оптимизации бизнес-процесса.\nРассматриваемый бизнес процесс -- заказ клиентом определенного товара за цену, предлагаемую самим клиентом.\n\nИспользование: написать "заказ (стоимость товара)"'
+        f'Привет, {update.effective_chat.full_name}!\n\nЭто чат-бот, предназначенный для оптимизации бизнес-процесса.\nРассматриваемый бизнес процесс -- заказ клиентом определенного товара за цену, предлагаемую самим клиентом.\n\nИспользование: написать "заказ (стоимость товара)"'
     )
 
 
