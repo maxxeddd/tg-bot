@@ -14,9 +14,12 @@ from telegram.ext import (
 load_dotenv()
 TOKEN: str = os.environ.get("TOKEN")
 
+bot = Bot(token=TOKEN)
 managers: [str] = ["n100o0"]
 
-pending_orders: [str] = []
+awaiting_manager: [str] = []
+awaiting_client: [str] = []
+chat_ids: {str: int} = {}
 
 
 def log(msg: str, logtype="INFO") -> None:
@@ -28,6 +31,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     username: str = update.effective_chat.username
     msg: str = update.message.text.lower()
+    split: [str] = msg.split()
 
     log(
         f"Message from {username}: {update.message.text}",
@@ -35,9 +39,25 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     )
 
     if username in managers:
-        pass
+        if split[0] in awaiting_manager:
+            if split[1] == "v":
+                chat_id = chat_ids[split[0]]
+                await context.bot.send_message(
+                    chat_id, "Ваш заказ был одобрен. Подтвердите заказ: Да/Нет"
+                )
+                log(f"{split[0]}'s order has been approved")
+                awaiting_manager.remove(split[0])
+                awaiting_client.append(split[0])
 
-    split: [str] = msg.split()
+    if username in awaiting_client:
+        while True:
+            match split[0].lower():
+                case "да":
+                    await update.message.reply_text("Ваш заказ в обработке.")
+                case "нет":
+                    await update.message.reply_text("Заказ был отклонён.")
+                case _:
+                    await update.message.reply_text('Ответьте "да" или "нет".')
 
     if msg.startswith("заказ "):
         if len(split) < 2:
@@ -50,15 +70,15 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
             await update.message.reply_text("Предложенная цена недействительна.")
             return
 
-        pending_orders.append(username)
-        log(f"{username} has been added to pending requests")
+        awaiting_manager.append(username)
+        chat_ids[username] = update.effective_chat.id
+        log(f"{username} has been added to orders ({split[1]})")
         await update.message.reply_text("Ваш заказ принят, дождитесь ответа менеджера.")
 
         await send_to_manager(501711095, f"{username}: {split[1]}")
 
 
 async def send_to_manager(chat_id, message: str):
-    bot = Bot(token=TOKEN)
     await bot.send_message(chat_id, text=message)
 
 
