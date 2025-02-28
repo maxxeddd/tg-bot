@@ -16,11 +16,11 @@ TOKEN: str = os.environ.get("TOKEN")
 MANAGER_CHAT_ID: int = int(os.environ.get("MANAGER_CHAT_ID"))
 
 bot = Bot(token=TOKEN)
-managers: [str] = []  # ! ДОБАВИТЬ СЮДА ЮЗЕРНЕЙМЫ МЕНЕДЖЕРОВ
+managers: list[str] = []  # ! ДОБАВИТЬ СЮДА ЮЗЕРНЕЙМЫ МЕНЕДЖЕРОВ
 
-awaiting_manager: [str] = []
-awaiting_client: [str] = []
-chat_ids: {str: int} = {}
+awaiting_manager: list[str] = []
+awaiting_client: list[str] = []
+chat_ids: dict[str, int] = {}
 
 
 def log(msg: str, logtype="INFO") -> None:
@@ -32,7 +32,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     username: str = update.effective_chat.username
     msg: str = update.message.text.lower()
-    split: [str] = msg.split()
+    split: list[str] = msg.split()
 
     log(
         f"Message from {username}: {update.message.text}",
