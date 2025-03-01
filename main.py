@@ -106,13 +106,13 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     )
 
 
-async def on_start(application):
+async def on_startup(application):
     log("Bot has been started")
 
 
 def main():
     app: ApplicationBuilder = (
-        ApplicationBuilder().token(TOKEN).post_init(on_start).build()
+        ApplicationBuilder().token(TOKEN).post_init(on_startup).build()
     )
 
     app.add_handler(CommandHandler("start", start))
